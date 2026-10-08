@@ -1,0 +1,54 @@
+name: Production RAG CI & Evaluation Suite
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test-and-evaluate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[dev]
+
+      - name: Run Pytest Test Suite
+        run: |
+          PYTHONPATH=. pytest tests/ -v --durations=10
+
+      - name: Run 100-Case Evaluation Benchmark
+        run: |
+          PYTHONPATH=. python -c "
+          from src.evals.harness import EvaluationHarness
+          h = EvaluationHarness()
+          h.setup_corpus()
+          summary, results = h.run_benchmark()
+          print('Benchmark HitRate@1:', summary.hit_rate_at_1)
+          print('Benchmark HitRate@3:', summary.hit_rate_at_3)
+          print('Benchmark MRR:', summary.mean_reciprocal_rank)
+          assert summary.hit_rate_at_3 >= 0.95
+          assert summary.mean_reciprocal_rank >= 0.85
+          h.export_report(summary, results)
+          "
+
+      - name: Upload Evaluation Benchmark Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-evaluation-report-py${{ matrix.python-version }}
+          path: benchmarks/
