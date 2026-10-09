@@ -21,15 +21,14 @@ def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
 
 
 class DeterministicSemanticEmbedder:
-    """Deterministic, high-performance semantic vectorizer.
+    """Deterministic hashed-token vectorizer (feature hashing, not a learned embedding model).
 
-    Generates dense embeddings (default 384 dimensions) using a combination of:
-    - Subword n-grams (2-gram, 3-gram, 4-gram)
-    - Normalized term-frequency weights
-    - Contextual hash projection
-    - L2 normalization to unit sphere (so dot product equals cosine similarity).
+    Generates dense vectors (default 384 dimensions) by:
+    - lower-cased word tokens plus character tri-grams of each word
+    - hashing each token into two signed dimensions (sha256/md5), with a small boost for the first 10 tokens
+    - L2 normalization to the unit sphere (so dot product equals cosine similarity).
 
-    Guarantees 100% reproducible, deterministic vector search without external network calls.
+    Fully reproducible and offline, but it captures lexical overlap only, not semantic similarity.
     """
 
     def __init__(self, dimension: int = 384):

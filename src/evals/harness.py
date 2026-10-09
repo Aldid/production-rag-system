@@ -164,11 +164,17 @@ class EvaluationHarness:
                 indent=2,
             )
 
+        def _status(ok: bool) -> str:
+            return "PASS" if ok else "FAIL"
+
         md_content = f"""# Production RAG System — Benchmark Evaluation Report
 
 **Total Test Cases:** {summary.total_cases}  
 **Date:** {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}  
-**Architecture:** Hybrid Dense-Sparse Retrieval (Deterministic Semantic Vector + BM25) with Reciprocal Rank Fusion (RRF)
+**Architecture:** Hybrid Dense-Sparse Retrieval (deterministic hashed-token embeddings + BM25) with Reciprocal Rank Fusion (RRF)  
+**Corpus:** {len(REFERENCE_CORPUS)} short self-written reference documents; the {summary.total_cases} queries and expected answers were also written by the author (see `src/evals/dataset.py`). Hit-Rate is measured at document level, so a random ranking already scores ~{100 / len(REFERENCE_CORPUS):.0f}% Hit-Rate @ 1.  
+**Faithfulness** is a lexical proxy (share of answer tokens found in the retrieved context), not an LLM- or human-judged score.  
+**Answer relevance** (token Jaccard vs. ground-truth answer): {summary.avg_answer_relevance * 100:.2f}%
 
 ---
 
@@ -176,15 +182,15 @@ class EvaluationHarness:
 
 | Metric | Measured Value | Production Target | Status |
 | :--- | :---: | :---: | :---: |
-| **Hit-Rate @ 1** | **{summary.hit_rate_at_1 * 100:.2f}%** | $\\ge 80.0\%$ | **PASS** |
-| **Hit-Rate @ 3** | **{summary.hit_rate_at_3 * 100:.2f}%** | $\\ge 95.0\%$ | **PASS** |
-| **Hit-Rate @ 5** | **{summary.hit_rate_at_5 * 100:.2f}%** | $\\ge 98.0\%$ | **PASS** |
-| **Mean Reciprocal Rank (MRR)** | **{summary.mean_reciprocal_rank:.4f}** | $\\ge 0.8500$ | **PASS** |
-| **Avg Keyword Grounding** | **{summary.avg_keyword_coverage * 100:.2f}%** | $\\ge 85.0\%$ | **PASS** |
-| **Context Faithfulness** | **{summary.avg_faithfulness * 100:.2f}%** | $\\ge 90.0\%$ | **PASS** |
-| **Citation Precision** | **{summary.avg_citation_precision * 100:.2f}%** | $\\ge 95.0\%$ | **PASS** |
-| **Average Query Latency** | **{summary.avg_latency_ms:.2f} ms** | $\\le 25.0$ ms | **PASS** |
-| **P95 Query Latency** | **{summary.p95_latency_ms:.2f} ms** | $\\le 50.0$ ms | **PASS** |
+| **Hit-Rate @ 1** | **{summary.hit_rate_at_1 * 100:.2f}%** | $\\ge 80.0\\%$ | **{_status(summary.hit_rate_at_1 >= 0.80)}** |
+| **Hit-Rate @ 3** | **{summary.hit_rate_at_3 * 100:.2f}%** | $\\ge 95.0\\%$ | **{_status(summary.hit_rate_at_3 >= 0.95)}** |
+| **Hit-Rate @ 5** | **{summary.hit_rate_at_5 * 100:.2f}%** | $\\ge 98.0\\%$ | **{_status(summary.hit_rate_at_5 >= 0.98)}** |
+| **Mean Reciprocal Rank (MRR)** | **{summary.mean_reciprocal_rank:.4f}** | $\\ge 0.8500$ | **{_status(summary.mean_reciprocal_rank >= 0.85)}** |
+| **Avg Keyword Grounding** | **{summary.avg_keyword_coverage * 100:.2f}%** | $\\ge 85.0\\%$ | **{_status(summary.avg_keyword_coverage >= 0.85)}** |
+| **Context Faithfulness** | **{summary.avg_faithfulness * 100:.2f}%** | $\\ge 90.0\\%$ | **{_status(summary.avg_faithfulness >= 0.90)}** |
+| **Citation Precision** | **{summary.avg_citation_precision * 100:.2f}%** | $\\ge 95.0\\%$ | **{_status(summary.avg_citation_precision >= 0.95)}** |
+| **Average Query Latency** | **{summary.avg_latency_ms:.2f} ms** | $\\le 25.0$ ms | **{_status(summary.avg_latency_ms <= 25.0)}** |
+| **P95 Query Latency** | **{summary.p95_latency_ms:.2f} ms** | $\\le 50.0$ ms | **{_status(summary.p95_latency_ms <= 50.0)}** |
 
 ---
 

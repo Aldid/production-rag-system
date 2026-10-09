@@ -1,8 +1,11 @@
 # Production RAG System — Benchmark Evaluation Report
 
 **Total Test Cases:** 100  
-**Date:** 2026-10-08 15:57:33 UTC  
-**Architecture:** Hybrid Dense-Sparse Retrieval (Deterministic Semantic Vector + BM25) with Reciprocal Rank Fusion (RRF)
+**Date:** 2026-10-09 14:03:51 UTC  
+**Architecture:** Hybrid Dense-Sparse Retrieval (deterministic hashed-token embeddings + BM25) with Reciprocal Rank Fusion (RRF)  
+**Corpus:** 5 short self-written reference documents; the 100 queries and expected answers were also written by the author (see `src/evals/dataset.py`). Hit-Rate is measured at document level, so a random ranking already scores ~20% Hit-Rate @ 1.  
+**Faithfulness** is a lexical proxy (share of answer tokens found in the retrieved context), not an LLM- or human-judged score.  
+**Answer relevance** (token Jaccard vs. ground-truth answer): 13.64%
 
 ---
 
@@ -17,8 +20,8 @@
 | **Avg Keyword Grounding** | **92.50%** | $\ge 85.0\%$ | **PASS** |
 | **Context Faithfulness** | **97.29%** | $\ge 90.0\%$ | **PASS** |
 | **Citation Precision** | **99.00%** | $\ge 95.0\%$ | **PASS** |
-| **Average Query Latency** | **2.64 ms** | $\le 25.0$ ms | **PASS** |
-| **P95 Query Latency** | **3.21 ms** | $\le 50.0$ ms | **PASS** |
+| **Average Query Latency** | **1.31 ms** | $\le 25.0$ ms | **PASS** |
+| **P95 Query Latency** | **1.73 ms** | $\le 50.0$ ms | **PASS** |
 
 ---
 
