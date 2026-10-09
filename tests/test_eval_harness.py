@@ -5,7 +5,7 @@ import pytest
 from src.evals.harness import EvaluationHarness
 
 
-def test_full_100_case_benchmark():
+def test_full_100_case_benchmark(tmp_path):
     harness = EvaluationHarness()
     chunks_count = harness.setup_corpus()
     assert chunks_count >= 5
@@ -30,7 +30,7 @@ def test_full_100_case_benchmark():
     # Latency SLAs
     assert summary.avg_latency_ms < 50.0, f"Average latency exceeded 50ms: {summary.avg_latency_ms}"
 
-    # Export report to disk
-    report_path = harness.export_report(summary, results, output_dir="/Users/user/Documents/production-rag-system/benchmarks")
+    # Export report to a temporary directory (keeps the test hermetic and OS-independent)
+    report_path = harness.export_report(summary, results, output_dir=str(tmp_path))
     assert os.path.exists(report_path)
-    assert os.path.exists("/Users/user/Documents/production-rag-system/benchmarks/evaluation_report.json")
+    assert os.path.exists(tmp_path / "evaluation_report.json")
